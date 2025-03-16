@@ -1,4 +1,11 @@
 {
   // https://nuxt.com/docs/guide/concepts/typescript
-  "extends": "./.nuxt/tsconfig.json"
+  "extends": "./.nuxt/tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "moduleResolution": "node",
+    "target": "ESNext",
+    "types": ["@types/ol"]
+  },
+  "include": ["**/*.ts", "**/*.vue", "types/**/*.d.ts"]
 }
