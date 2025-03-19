@@ -20,5 +20,8 @@
 			"@parcel/watcher",
 			"esbuild"
 		]
+	},
+	"devDependencies": {
+		"@rollup/rollup-linux-arm64-gnu": "^4.36.0"
 	}
 }
