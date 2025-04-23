@@ -25,15 +25,15 @@ class SzkolaAPIResponse(SzkolaExtendedData):
     status_publiczno_prawny: StatusPublicznoprawnyBase
     etapy_edukacji: list[EtapEdukacjiBase]
     wojewodztwo: str
-    wojewodztwo_kod_TERYT: str
+    wojewodztwo_kod_TERYT: str  # noqa: N815
     powiat: str
-    powiat_kod_TERYT: str
+    powiat_kod_TERYT: str  # noqa: N815
     gmina: str
-    gmina_kod_TERYT: str
+    gmina_kod_TERYT: str  # noqa: N815
     miejscowosc: str
-    miejscowosc_kod_TERYT: str
+    miejscowosc_kod_TERYT: str  # noqa: N815
     ulica: str | None
-    ulica_kod_TERYT: str | None
+    ulica_kod_TERYT: str | None  # noqa: N815
 
     @model_validator(mode="before")
     @classmethod

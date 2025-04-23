@@ -1,4 +1,4 @@
-class APIException(Exception):
+class APIError(Exception):
     """Base exception for API-related errors."""
 
     message: str
@@ -8,7 +8,7 @@ class APIException(Exception):
         super().__init__(self.message)
 
 
-class APIRequestException(APIException):
+class APIRequestError(APIError):
     """Exception raised when an API request fails."""
 
     attempts: int
@@ -18,7 +18,7 @@ class APIRequestException(APIException):
         super().__init__(f"{message} (after {attempts} attempts)")
 
 
-class SchoolsDataException(APIException):
+class SchoolsDataError(APIError):
     """Exception raised when there's an issue with schools data."""
 
     page: int | None

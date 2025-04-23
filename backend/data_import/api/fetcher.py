@@ -5,7 +5,7 @@ from typing import cast
 import requests
 
 from ..core.config import TIMEOUT, APISettings, RetrySettings
-from .exceptions import APIRequestException, SchoolsDataException
+from .exceptions import APIRequestError, SchoolsDataError
 from .types import APIResponse, SchoolDict
 
 logger = logging.getLogger(__name__)
@@ -64,7 +64,7 @@ class SchoolsAPIFetcher:
                     delay = min(
                         delay * 2, RetrySettings.MAX_DELAY
                     )  # exponential backoff
-        raise APIRequestException(
+        raise APIRequestError(
             "API Request failed after all retries", attempts=max_retries
         )  # Raise custom exception after all retries
 
@@ -78,9 +78,9 @@ class SchoolsAPIFetcher:
             data = self.api_request(params)
             hydra_response = HydraResponse(data)
             return hydra_response
-        except APIRequestException as err:
+        except APIRequestError as err:
             logging.critical(f"🚫 Fatal error fetching schools data: {err}")
-            raise SchoolsDataException(str(err), page=page) from err
+            raise SchoolsDataError(str(err), page=page) from err
 
     def fetch_schools_segment(
         self, start_page: int, max_schools: int = APISettings.MAX_SCHOOLS_SEGMENT
@@ -103,7 +103,7 @@ class SchoolsAPIFetcher:
                     f"📋 Fetched {len(new_schools)} schools from page {current_page}"
                 )
             else:
-                logger.info(f"ℹ️ No schools found on page {current_page}")
+                logger.info(f"ℹ️ No schools found on page {current_page}")  # noqa: RUF001
 
             # check if page limit is reached
             if APISettings.PAGE_LIMIT and current_page >= APISettings.PAGE_LIMIT:

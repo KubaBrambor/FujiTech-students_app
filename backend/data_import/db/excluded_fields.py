@@ -1,3 +1,6 @@
+from typing import ClassVar
+
+
 class SchoolFieldExclusions:
     """
     Fields from API response class that should be excluded during school data decomposition.
@@ -8,7 +11,7 @@ class SchoolFieldExclusions:
     MIEJSCOWOSC: str = "miejscowosc"
     ULICA: str = "ulica"
 
-    ALL: list[str] = [
+    ALL: ClassVar[list[str]] = [
         TYP,
         ETAPY_EDUKACJI,
         MIEJSCOWOSC,

@@ -1,7 +1,7 @@
 import logging
 
 from ..app.core.database import create_db_and_tables
-from .api.exceptions import SchoolsDataException
+from .api.exceptions import SchoolsDataError
 from .api.fetcher import SchoolsAPIFetcher
 from .core.config import APISettings
 from .db.decomposer import DatabaseDecomposer
@@ -47,7 +47,7 @@ def main():
             )
 
             if not schools_data:
-                logger.info("ℹ️ No more schools to process")
+                logger.info("ℹ️ No more schools to process")  # noqa: RUF001
                 break
 
             logger.info(
@@ -69,7 +69,7 @@ def main():
             current_page = next_page
             segment_number += 1
 
-        except SchoolsDataException as e:
+        except SchoolsDataError as e:
             logger.error(f"📛 Schools data error: {e}")
             print_error_message(segment_number, current_page)
             break

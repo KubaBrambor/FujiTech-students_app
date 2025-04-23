@@ -14,6 +14,31 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "basedpyright>=1.28.4",
     "debugpy>=1.8.12",
     "ruff>=0.9.9",
 ]
+
+[tool.ruff.lint]
+select = [
+    "E4",  # pycodestyle (specifically import conventions like E402)
+    "E7",  # pycodestyle errors (comparisons, bare excepts)
+    "E9",  # pycodestyle runtime/syntax errors 
+    "F",   # Pyflakes (undefined names, unused imports/variables, etc.)
+    "B",   # flake8-bugbear (potential bugs and design problems)
+    "I",   # isort (import sorting)
+    "Q",   # flake8-quotes (quote consistency)
+    "ARG", # flake8-unused-arguments (detect unused function arguments)
+    "FAST",# flake8-fastapi (FastAPI specific linting rules)
+    "N",   # pep8-naming (PEP 8 naming conventions)
+    "RUF"  # Ruff-specific rules (built-in rules unique to Ruff)
+]
+
+[tool.basedpyright]
+# using ruff for unused code (ARG rule)
+reportUnusedVariable = "none"
+reportUnusedImport = "none"
+reportUnusedFunction = "none"
+reportUnusedClass = "none"
+reportUnusedExpression = "none"
+reportImportCycles = "none" # using ORMs it is almost impossible to avoid cycles
