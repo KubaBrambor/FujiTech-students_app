@@ -1,39 +1,47 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
+import { onMounted, ref, watch } from "vue";
 import maplibregl from "maplibre-gl";
-import "maplibre-gl/dist/maplibre-gl.css"; 
+import "maplibre-gl/dist/maplibre-gl.css";
+import { useRspo } from "~/composables/fetcher";
+import type { School } from "~/types/rspo";
 
-const schools = [
-    {
-        name: "Technikum Elektroniczne w Warszawie",
-        lat: 52.2298,
-        lon: 21.0118,
-        type: "Technikum",
-        value: 100,
-    },
-    {
-        name: "Liceum Ogólnokształcące w Krakowie",
-        lat: 50.0614,
-        lon: 19.9366,
-        type: "Liceum",
-        value: 45,
-    },
-    {
-        name: "Zespół Szkół Zawodowych w Gdańsku",
-        lat: 54.352,
-        lon: 18.6466,
-        type: "Zawodowka",
-        value: 5,
-    },
-    {
-        name: "Technikum Komunikacyjne",
-        lat: 52.2298,
-        lon: 21.0118,
-        type: "Technikum",
-        value: 70,
-    },
-];
+// Initialize composable with reactive state
+const { institutions, isLoading, error, fetchInstitutions } = useRspo();
+const map = ref(null);
+const schools = ref<School[]>([]);
 
+// Fetch data when component mounts
+onMounted(async () => {
+  await fetchInstitutions("/placowki/", {
+    method: "GET",
+    params: {
+      page: 30,
+    }, 
+  });
+  console.log("Data fetched:", institutions.value?.length || 0, "institutions");
+});
+
+// Process data when it becomes available
+watch(institutions, (newInstitutions) => {
+  if (newInstitutions && newInstitutions.length > 0) {
+    console.log("Processing", newInstitutions.length, "institutions");
+    
+    // Map the institutions to schools format
+    schools.value = newInstitutions.map((school) => {
+      return {
+        name: school.nazwa,
+        type: school.typ.nazwa,
+        lat: school.geolokalizacja.latitude,
+        lon: school.geolokalizacja.longitude,
+        value: Math.floor(Math.random() * 100),
+      };
+    })
+    // Initialize map after data is processed
+    initializeMap();
+  }
+}, { deep: true });
+
+// Color generation based on value
 const getColorForValue = (value: number): string => {
     // Ensure value stays within 0-100 for calculation if needed
     const clampedValue = Math.max(0, Math.min(100, value));
@@ -42,6 +50,7 @@ const getColorForValue = (value: number): string => {
     return `rgb(${red},${green},0)`;
 };
 
+// SVG shape generation based on school type
 const getShapeSVG = (type: string): string => {
     // Using currentColor allows the SVG fill to inherit the color set via CSS
     switch (type) {
@@ -56,73 +65,104 @@ const getShapeSVG = (type: string): string => {
     }
 };
 
-onMounted(() => {
-    // This code runs only on the client-side after the component is mounted
-    const map = new maplibregl.Map({
-        container: "map", // The ID of the div in the template
-        style: "https://tiles.openfreemap.org/styles/liberty", // Base map style
-        center: [21.0118, 52.2298], // Initial map center [Lon, Lat]
-        zoom: 6, // Adjusted initial zoom to see more schools
-        maxBounds: [ // Optional: constrain map panning
-            [14.0, 49.0], // Southwest coordinates
-            [24.2, 55.0], // Northeast coordinates
-        ],
+// Move map initialization to a separate function that's called after data is processed
+const initializeMap = () => {
+  if (map.value) return; // Avoid initializing twice
+  
+  console.log("Initializing map with", schools.value.length, "schools");
+  
+  map.value = new maplibregl.Map({
+    container: "map",
+    style: "https://tiles.openfreemap.org/styles/liberty",
+    center: [21.0118, 52.2298],
+    zoom: 7,
+    maxBounds: [
+      [14.0, 49.0],
+      [24.2, 55.0],
+    ],
+  });
+  
+  map.value.addControl(new maplibregl.NavigationControl(), 'top-right');
+  map.value.addControl(new maplibregl.FullscreenControl(), 'top-right');
+  
+  // Wait for the map to load before adding markers
+  map.value.on('load', () => {
+    schools.value.forEach((school) => {
+      // Create SVG marker (from original file)
+      const el = document.createElement("div");
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("viewBox", "0 0 24 24");
+      svg.setAttribute("width", "24");
+      svg.setAttribute("height", "24");
+      svg.innerHTML = getShapeSVG(school.type);
+      el.appendChild(svg);
+      el.style.color = getColorForValue(school.value);
+      el.style.width = "24px";
+      el.style.height = "24px";
+      el.style.cursor = 'pointer';
+      el.title = school.name;
+      
+      new maplibregl.Marker({ element: el })
+        .setLngLat([school.lon, school.lat])
+        .setPopup(
+          new maplibregl.Popup({ offset: 25 })
+            .setHTML(`<h3>${school.name}</h3><p>Typ: ${school.type}<br>Wartość: ${school.value}</p>`)
+        )
+        .addTo(map.value);
     });
-
-    // Add controls using the main maplibregl object
-    map.addControl(new maplibregl.NavigationControl(), 'top-right'); // Position controls
-    map.addControl(new maplibregl.FullscreenControl(), 'top-right'); // Position controls
-
-    // Create and add markers to the map
-    schools.forEach((school) => {
-        // 1. Create the custom HTML element for the marker
-        const el = document.createElement("div");
-        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        svg.setAttribute("viewBox", "0 0 24 24"); // Added viewBox for better scaling
-        svg.setAttribute("width", "24");
-        svg.setAttribute("height", "24");
-        svg.innerHTML = getShapeSVG(school.type); // Generate the SVG shape string
-        el.appendChild(svg);
-        el.style.color = getColorForValue(school.value); // Set SVG fill via CSS 'color' property
-        el.style.width = "24px";
-        el.style.height = "24px";
-        el.style.cursor = 'pointer'; // Make it look clickable
-        el.title = school.name; // Add a hover title
-
-        // 2. Create the MapLibre Marker, assign the custom element, set position, add popup, and add to map
-        new maplibregl.Marker({ element: el })
-            .setLngLat([school.lon, school.lat]) // Set marker position [Lon, Lat]
-            .setPopup(new maplibregl.Popup({ offset: 25 }) // Create a popup, offset slightly
-                .setHTML(`<h3>${school.name}</h3><p>Typ: ${school.type}<br>Wartość: ${school.value}</p>`) // Set popup content
-            )
-            .addTo(map); // Add the marker instance to the map
-    });
-});
+  });
+};
 </script>
 
 <template>
-    <div class="map-container">
-        <h1>Mapa OpenStreetMap (MapLibre) - Szkoły</h1>
-        <div id="map"></div>
-    </div>
+  <div class="map-container">
+    <h1>Mapa OpenStreetMap (MapLibre) - Szkoły</h1>
+    <div v-if="isLoading" class="status-message loading">Ładowanie danych...</div>
+    <div v-else-if="error" class="status-message error">Błąd: {{ error.message }}</div>
+    <div v-else-if="schools.length === 0" class="status-message">Brak szkół do wyświetlenia</div>
+    <div id="map"></div>
+  </div>
 </template>
 
 <style scoped>
 .map-container {
-    width: 100%;
-    height: 90vh; 
-    display: flex;
-    flex-direction: column;
-    align-items: center; 
-    padding: 1rem; 
-    box-sizing: border-box;
+  width: 100%;
+  height: 90vh; 
+  display: flex;
+  flex-direction: column;
+  align-items: center; 
+  padding: 1rem; 
+  box-sizing: border-box;
 }
 
 #map {
-    width: 100%; 
-    max-width: 1200px; 
-    height: 100%; 
-    border: 1px solid #ccc;
-    border-radius: 8px;
+  width: 100%; 
+  max-width: 1200px; 
+  height: 100%; 
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.status-message {
+  margin: 10px 0;
+  padding: 10px;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.loading {
+  background-color: #e3f2fd;
+}
+
+.error {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+@media (max-width: 768px) {
+  #map {
+    width: 95vw;
+    height: 60vh;
+  }
 }
 </style>
