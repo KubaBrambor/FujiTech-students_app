@@ -2,11 +2,11 @@
 import { onMounted, ref, watch } from "vue";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { useRspo } from "~/composables/fetcher";
+import { useApiFetcher } from "~/composables/useFetch";
 import type { School } from "~/types/rspo";
 
 // Initialize composable with reactive state
-const { institutions, isLoading, error, fetchInstitutions } = useRspo();
+const { institutions, isLoading, error, fetchInstitutions } = useApiFetcher();
 const map = ref(null);
 const schools = ref<School[]>([]);
 
@@ -35,7 +35,7 @@ watch(institutions, (newInstitutions) => {
         lon: school.geolokalizacja.longitude,
         value: Math.floor(Math.random() * 100),
       };
-    })
+    });
     // Initialize map after data is processed
     initializeMap();
   }
