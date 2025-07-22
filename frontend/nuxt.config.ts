@@ -18,9 +18,6 @@ export default defineNuxtConfig({
     },
   },
 
-  // --- POCZĄTEK DODANEGO FRAGMENTU ---
-  // Ta sekcja naprawia błąd 403 Forbidden, zezwalając serwerowi Vite
-  // na bezpieczny dostęp do plików w folderze projektu.
   vite: {
     server: {
       fs: {
@@ -30,5 +27,4 @@ export default defineNuxtConfig({
       }
     }
   }
-  // --- KONIEC DODANEGO FRAGMENTU ---
 });
