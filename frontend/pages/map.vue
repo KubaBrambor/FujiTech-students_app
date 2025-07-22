@@ -1,3 +1,4 @@
+// pages/map.vue
 <script setup lang="ts">
 import { onMounted, ref, watch } from "vue";
 import maplibregl from "maplibre-gl";
